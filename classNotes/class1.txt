@@ -1,0 +1,232 @@
+29 sept: 
+Today what we do?
+
+THEORY ->
+# Server:
+
+
+
+
+
+
+
+==========CODE==============
+#Basic -> to make server
+
+
+//IN APP1.JS 
+
+1) const express = require('express');
+const app = express();
+app.listen(8082, function () {
+    console.log('server is started');
+})
+
+to run this -> node app1.js -> to check this go on google and search it shows cannot get
+
+=====================
+
+// Now ab crud operation krege
+1) app.get('/', function (req,res) {   //with / or without / are same thing
+    console.log('hello from backend');
+   res.send( '<h1>Hello from backend </h1>')
+})
+
+2) update above CODE
+
+app.get('/', function (req,res) {
+    console.log('hello from backend');
+//    res.send( '<h1>Hello from backend </h1>')
+   let content =  JSON.parse( fs.readFileSync('./data.json'));   //json.stringify use because to convert it in json format
+    res.status(200).json({   //means idr aakr puri file ka content read kro to for this fs require krke read krege
+        message: content
+    })
+})
+======================================
+3)   //2) Post -> for post -> hm add krege 1st app.use(express.json()) -> isme next apne aaplikha hota hai toh next person ke paas bhjega jiske pass post request hogi
+// app.use yeh chlta rehta hai throughout the program
+app.use('/', function (req, res , next) {
+    let body = req.body;  //o bhi frontend me likhege
+    console.log('before', body);  //show undefined because express.json ne data read hi nahi kra agar yeh phle hota toh yeh read krleta
+    next();
+})
+app.use(express.json());   //jo express json me data aaya usko request.body me add krdega
+
+app.post('/', function (req, res) {
+    let body = req.body;
+    console.log('after', body);
+    res.status(200).json({
+        message: body
+    })
+})
+
+//3) update-> post req -> it add parameter
+app.put("/", function (req, res) {
+  console.log("hello from homepage");
+  res.send("<h1>Helloe from home Page</h1>");
+});
+
+// 4)Delete
+app.delete("/", function (req, res) {
+  console.log("hello from homepage");
+  res.send("<h1>Helloe from home Page</h1>");
+});
+
+//Now install nodemon -> package.json -> script me add krege : "start" : "nodemon app1.js" Then write only in terminal npm start (to start this code)
+
+
+=============================================
+
+
+===================
+
+2) 2ND FILE MAKE data.json -> it is our initiall Database
+
+=====================
+NOTE:ROUTING  ->:TO MAKE DIFFERENT ROUTES HOW TO USE THEM
+A) const userRouter = express.Router();
+B) app.use('/user', userRouter);
+C) userRouter
+    .route('/')
+    .post(createUser);
+D) THEN WRITE function
+======================
+function createUser(req, res) {
+    console.log('users');
+    let body = req.body;  //the body that can be store in which we had added
+    console.log(body);
+    content.push(req.body);  //jo bhi body me aaya vo push kr diya
+    //put data in data storage
+    fs.writeFileSync("./data.json",JSON.stringify(content))
+    res.json({
+        message: content
+    }) 
+}
+
+====================
+# MIDDLE WARE ->
+
+
+===================
+Code class 1: 
+//npm init -y
+const express = require("express");
+let fs = require("fs");
+const app = express();
+
+let content = JSON.parse(fs.readFileSync("./data.json"));
+//crud functions
+
+app.use(express.json());
+
+// Make routes in particular folder
+const userRouter = express.Router();
+const authRouter = express.Router();
+
+app.use('/user', userRouter);
+app.use('/auth', authRouter);
+
+userRouter
+    .route('/')
+    .post(bodyChecker, createUser);  //bodyChecker is the middle ware -> toh uske aagla chljaega function && we send middleware next or jo next hoga toh uske next chljaega
+userRouter
+    .route('/:id')  //localhost:8082/user/10 -> post
+    .get(getUser)
+
+function createUser(req, res) {
+    console.log('users');
+    let body = req.body;  //the body that can be store in which we had added
+    console.log(body);
+    content.push(req.body);  //jo bhi body me aaya vo push kr diya
+    //put data in data storage
+    fs.writeFileSync("./data.json",JSON.stringify(content))
+    res.json({
+        message: content
+    }) 
+}
+function bodyChecker(req, res, next) {
+    console.log('body checker reached');
+    let isPresent = Object.keys(req.body).length;  
+    console.log('ispresent', isPresent);
+    if (isPresent) {  //if the length is 1 ie true then this will execute
+        next();  
+    } else {
+        res.json({
+            message:"kindly send the details in the body"
+        })
+    }
+}
+function getUser(req, res) {
+    res.send({
+        message:content,
+    })
+}
+
+app.listen(8082, function () {
+  console.log("server is started");
+});
+
+// NEXT in Middleware =================================
+app.post('/', function (req, res, next) {
+    let body = req.body;
+    console.log('inside first post', body);
+    next();
+})
+app.use(function (req, res, next) {  // in this app.use it doesnot have next $$ next is in express.json and every express function has inbuilt next
+    console.log('inside app.use');
+    next();
+})
+
+app.get('/', function (req, res, next) {  //post ki request nahi kri toh agar next krege toh yeh nahi chlega
+    console.log('inside get');
+})
+
+app.post('/', function (req, res, next) {
+    let body = req.body;
+    console.log('inside first post', body);
+    res.send('tested next')
+})
+
+
+
+
+// CRUD OPERATIONS:===============================
+
+//2) Post -> for post -> hm add krege 1st app.use(express.json())
+// app.use("/", function (req, res, next) {
+//     let body = req.body;
+//     console.log("before", body);
+//     next();
+//   });
+  
+  // app.use(express.json());
+  
+//   app.post("/", function (req, res) {
+//     let body = req.body;
+//     console.log("after", body);
+//     res.status(200).json({
+//       message: body,
+//     });
+//   });
+  
+//   // 1) read
+//   app.get("/", function (req, res) {
+//     console.log("hello from backend");
+//     //    res.send( '<h1>Hello from backend </h1>')
+//     res.status(200).json({
+//       message: content,
+//     });
+//   });
+  
+//   //3) update-> post req -> it add parameter
+//   app.put("/", function (req, res) {
+//     console.log("hello from homepage");
+//     res.send("<h1>Helloe from home Page</h1>");
+//   });
+  
+//   // 4)Delete
+//   app.delete("/", function (req, res) {
+//     console.log("hello from homepage");
+//     res.send("<h1>Helloe from home Page</h1>");
+//   });
+  
