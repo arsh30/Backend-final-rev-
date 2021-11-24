@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CREATING SIGNUP PAGE</title>
+</head>
+<body>
+    <form>
+        <label>Email</label>
+        <input type="email">
+        <label>Name</label>
+        <input type="text">
+        <label>Password</label>
+        <input type="password" class="password">
+        <label>confirmPassword</label>
+        <input type="password" class="cpassword">
+        <button>Signup</button>
+    </form>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/axios/0.24.0/axios.min.js" integrity="sha512-u9akINsQsAkG9xjc1cnGF4zw5TFDwkxuc9vUp5dltDWYCSmyd0meygbvgXrlc/z7/o4a19Fb5V0OUE58J7dcyw==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+    <script>
+        let btn = document.querySelector("button");
+        btn.addEventListener('click',async function(e){  //async coz the request is going
+           e.preventDefault();  //coz when the form is reload the details are vanish
+            let email = document.querySelector("input[type='email']").value;
+            let name = document.querySelector("input[type='text']").value;
+            let password = document.querySelector(".password").value;
+            let confirmPassword = document.querySelector(".cpassword").value;
+
+            //TO SEND THE DATA TO BACKEND 
+        let response = await axios.post('/auth/signup', {email,password,name,confirmPassword}); //2nd parameter is what we are sending to the backend
+            console.log(response.data);
+        })
+    </script>
+</body>
+</html>
