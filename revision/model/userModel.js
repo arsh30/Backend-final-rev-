@@ -43,6 +43,11 @@ const userSchema = new mongoose.Schema({
     }
 })
 
+//hooks -> pre cook , save is the event listner , we can delete update as well
+userSchema.pre('save', function () {
+    this.confirmPassword = undefined;
+})
+
 //2nd make model from userschema
 const userModel = mongoose.model("userModel", userSchema);
 
