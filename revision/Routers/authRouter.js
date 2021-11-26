@@ -3,11 +3,13 @@ const { bodyChecker } = require("./utilFns");
 const jwt = require("jsonwebtoken");
 const userModel = require("../model/userModel");
 const { JWT_SECRET } = require("../secret");
+const emailSender = require("../helpers/emailSender");
 
 const authRouter = express.Router();
 
 authRouter.route("/signup").post(bodyChecker, signupUser);
 authRouter.route("/login").post(bodyChecker, loginUser);
+authRouter.route("/forgetPassword").post(bodyChecker, forgetPassword);
 
 async function signupUser(req, res) {
   try {
@@ -41,6 +43,41 @@ async function loginUser(req, res) {
           message: "email or password is incorrect",
         });
       }
+    } else {
+      res.status(400).json({
+        message: "email or password is incorrect",
+      });
+    }
+  } catch (err) {
+    console.log(err);
+    res.status(500).json({
+      message: err.message,
+    });
+  }
+}
+
+async function forgetPassword(req, res) {
+  try {
+    let { email } = req.body;
+    let user = await userModel.findOne({ email }); //1st search the email on the database
+    if (user) {
+      let token = (Math.floor(Math.random() * 10000) + 10000)
+        .toString()
+        .substring(1); //2nd  create token otp based
+      let updateRes = await userModel.updateOne({ email }, { token }); //3rd update the database with the new token
+      // console.log("updated Value", updateRes);
+
+      let newUser = await userModel.findOne({ email });
+      console.log("newUser", newUser);
+
+      //4 step is to send the mail on the user
+      await emailSender(token, user.email);
+
+      res.status(200).json({
+        message: "user Token send to your email",
+        user: newUser,
+        token,
+      });
     } else {
       res.status(400).json({
         message: "email or password is incorrect",

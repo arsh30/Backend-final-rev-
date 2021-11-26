@@ -38,6 +38,7 @@ const userSchema = new mongoose.Schema({
             this.password = this.confirmPassword
         }
     },
+    token: String,
     createdAt: {
         type:String
     }
