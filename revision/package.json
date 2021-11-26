@@ -4,8 +4,12 @@
   "description": "",
   "main": "app1.js",
   "dependencies": {
+    "cookie-parser": "^1.4.6",
+    "email-validator": "^2.0.4",
     "express": "^4.17.1",
     "fs": "0.0.1-security",
+    "jsonwebtoken": "^8.5.1",
+    "mongoose": "^6.0.13",
     "nodemon": "^2.0.15"
   },
   "devDependencies": {},
