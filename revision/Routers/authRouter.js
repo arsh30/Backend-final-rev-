@@ -10,6 +10,7 @@ const authRouter = express.Router();
 authRouter.route("/signup").post(bodyChecker, signupUser);
 authRouter.route("/login").post(bodyChecker, loginUser);
 authRouter.route("/forgetPassword").post(bodyChecker, forgetPassword);
+authRouter.route("/resetPassword").post(bodyChecker, resetPassword);
 
 async function signupUser(req, res) {
   try {
@@ -81,6 +82,41 @@ async function forgetPassword(req, res) {
     } else {
       res.status(400).json({
         message: "email or password is incorrect",
+      });
+    }
+  } catch (err) {
+    console.log(err);
+    res.status(500).json({
+      message: err.message,
+    });
+  }
+}
+
+async function resetPassword(req, res) {
+  try {
+    let { token, password, confirmPassword } = req.body;
+    let user = await userModel.findOne({ token }); //user nikala adn token ke basis pr search kra database me
+    console.log("user", user);
+    if (user) {
+      // user.password = password;
+      // user.confirmPassword = confirmPassword;
+      // user.token = undefined;   //yeh jo krre the use this by METHODS:
+
+      //ALTERNATE WAY
+
+      user.resetHandler(password, confirmPassword);
+      await user.save();
+
+      let newUser = await userModel.findOne({ email: user.email });
+
+      res.status(200).json({
+        message: "user token send to your email",
+        user: newUser,
+        token,
+      });
+    } else {
+      res.status(404).json({
+        message: "token is incorrect",
       });
     }
   } catch (err) {
