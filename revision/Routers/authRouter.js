@@ -95,7 +95,7 @@ async function forgetPassword(req, res) {
 async function resetPassword(req, res) {
   try {
     let { token, password, confirmPassword } = req.body;
-    let user = await userModel.findOne({ token }); //user nikala adn token ke basis pr search kra database me
+    let user = await userModel.findOne({ token }); //user nikala adn token ke basis pr search kra database me , token mila toh aage chhla
     console.log("user", user);
     if (user) {
       // user.password = password;

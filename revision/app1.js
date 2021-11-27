@@ -35,6 +35,11 @@ app.use(function (req, res) {
 //     .route('/:id')  //localhost:8082/user/10 -> post
 //     .get(getUser)
 
+// function getUser(req, res) {
+//   res.send({
+//     message: content,
+//   });
+// }
 
 // function createUser(req, res) {
 //   console.log("users");
@@ -47,14 +52,6 @@ app.use(function (req, res) {
 //     message: content,
 //   });
 // }
-
-// function getUser(req, res) {
-//   res.send({
-//     message: content,
-//   });
-// }
-
-
 
 // NEXT in Middleware =================================
 // app.post('/', function (req, res, next) {
