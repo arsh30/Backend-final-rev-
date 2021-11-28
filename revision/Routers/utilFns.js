@@ -21,10 +21,13 @@ module.exports.protectRoute =  function protectRoute(req, res, next) {
   
     //token verify -> do this when we do the reqest multiple times
     let decryptedToken = jwt.verify(req.cookies.JWT, JWT_SECRET); //req.cookies.JWT -> JWTis the cookie name jo request me thi AND 2nd argument is the secret code
-    console.log("decryptedToken", decryptedToken);
+    console.log("decryptedToken 68", decryptedToken);
   
     //2) verify everytime that if bringing the token to get your response
-    if (decryptedToken) {
+  if (decryptedToken) {
+    let userId = decryptedToken.id;
+    req.userId = userId;  //request ki body me and userId name ki bnaya or save krdiya with userId jo abhi nikali hai
+    console.log('body:',req.userId);
       next();
     } else {
       res.send("kindly login to access this resource");

@@ -5,16 +5,22 @@ const { protectRoute , bodyChecker} = require('./utilFns');
 // Make routes in particular folder
 const userRouter = express.Router();
 
-userRouter
-  .route("/")
-  .post(bodyChecker, createUser)
-  .get(protectRoute, getUsers);  //locahost:8082/user/ -> get
+userRouter.use(protectRoute);  //we want that before every function the protetRoute will be added in front of this we do authorization part
 
 userRouter
-  .route("/:id")   //api/user/ some id
-  .get(getUser)
-  .patch(bodyChecker, updateUser)
-  .delete(bodyChecker, deleteUser)
+  .route('/:id')  //we created this id because we make sure that the user will come to get the id, it is necessary to give the idea to them
+  .get(getUser);  //same route will not give us the error
+
+userRouter
+  .route("/")
+  .post(bodyChecker,isAuthorized(["admin"]) ,createUser)
+  .get(protectRoute,isAuthorized(["admin","ce"]) ,getUsers);  //locahost:8082/user/ -> get
+
+userRouter
+  .route("/:id")   //api/user/ some id  
+  .get(getUser)   //(delete and create sirf admin kar skta)
+  .patch(bodyChecker, isAuthorized(["admin", "ce"]), updateUser)  //isAuthorized(["admin","ce"]) -> means is Authorized ko call lgay hmne and usme ik array me dalkr roles bhjdiye ki yehi allowed
+  .delete(bodyChecker, isAuthorized(["admin"]), deleteUser)
 
 async function createUser(req, res) {
     try {
@@ -64,13 +70,21 @@ async function getUsers(req, res) {
 async function updateUser(req, res) {   //isme jo id vo param me aayegi and data body me aayegi
   let { id } = req.params;
   try {
+    if (req.body.password || req.body.confirmPassword) {   //agar password hai or confirm password usko chnge nhi krna
+      return res.status(400).json({
+        message:"usee forget Password instead"
+      })
+    }
     let user = await userModel.findById(id);
+    console.log("user", user);
     if (user) {
       // req.body.id = undefined; dont need this because data param me hai
-      for (let key in user) {   //update work jese hmne reset me kr tha vese hi krege means user phle mangwaege then usme updation krege
+      for (let key in req.body) {   //update work jese hmne reset me kr tha vese hi krege means user phle mangwaege then usme updation krege
         user[key] = req.body[key];
       }
-      await user.save();
+      await user.save({
+        validateBeforeSave: false,  //yeh jo hai confirm password and password mangra tha toh yeh mongoose function isse sare jitne bhi validators hai vo bnd krdiya jidr password and confirmpassword match hora tha sab band krdiya, and we closed the prehook function also
+      });
       res.status(200).json({
         message:user
       })
@@ -102,4 +116,72 @@ async function deleteUser(req, res) {
     })
   }
 }
+ 
+function isAuthorized(roles) {
+  //id -> user get -> then define roles 
+  //roles -> then check the role is present in the array or not  && otherwise not
+  return async function (req, res, next) {
+    let { userId } = req;  //yeh hmko milegi through protect route
+    console.log("isAuthorized body:", id);
+    try {
+      let user = await userModel.findOne({ userId });
+      let isAuthorized = roles.includes(user.role);
+      if (isAuthorized) {
+        next();
+      } else {
+        res.status().json({
+          message:"user Not Authorized"
+        })
+      }
+    } catch (err) {
+      console.log(err);
+      res.status(500).json({
+        message:"server error"
+      })
+    }
+  }
+}
+// async function isAuthorized(req, res) {
+//   let { userId } = req;
+//   let roles = ["admin"];
+//   //id -> user get -> define role of the user
+//   try {
+//     let user = await userModel.findById(userId);   
+//     let userIsAuthorized = roles.includes(user.role);
+//     if (userIsAuthorized) {
+//       next();
+//     }
+//     else {
+//       res.status(404).json({
+//         message:"user not autherized"
+//       })
+//     }
+//   }catch (err) {
+//     console.log(err);
+//     res.status(500).json({
+//       message:"server error"
+//     })
+//   }
+// }
+// async function isAuthorizedCE(req, res) {
+//   let { userId } = req;
+//   let roles = ["admin","ce"];
+//   //id -> user get -> define role of the user
+//   try {
+//     let user = await userModel.findById(userId);   
+//     let userIsAuthorized = roles.includes(user.role);
+//     if (userIsAuthorized) {
+//       next();
+//     } else {
+//       res.status(404).json({
+//         message:"user not autherized"
+//       })
+//     }
+//   }catch (err) {
+//     console.log(err);
+//     res.status(500).json({
+//       message:"server error"
+//     })
+//   }
+// }
 module.exports = userRouter;

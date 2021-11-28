@@ -41,9 +41,14 @@ const userSchema = new mongoose.Schema({
     },
   },
   token: String,
+  roles: {
+    type: String,
+    enum: ["admin", "ce", "user"],
+    default: "user"
+  },
   createdAt: {
     type: String,
-  },
+  }
 });
 
 //hooks -> pre cook , save is the event listner , we can delete update as well
