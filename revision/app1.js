@@ -1,10 +1,11 @@
 //npm init -y
 const express = require("express");
 let fs = require("fs");
-const userRouter = require('./Routers/userRouter');
-const authRouter = require('./Routers/authRouter');
+const userRouter = require("./Routers/userRouter");
+const authRouter = require("./Routers/authRouter");
+const planRouter = require("./Routers/planRouter");
 const cookieParser = require("cookie-parser");
-
+const reviewRouter = require("./Routers/reviewRouter");
 
 const app = express();
 
@@ -15,10 +16,10 @@ app.use(express.static("Frontend_Folder"));
 app.use(express.json());
 app.use(cookieParser()); //from this we send cookie to anyone (cookie ie token)
 
-
 app.use("/api/user", userRouter);
 app.use("/api/auth", authRouter);
-
+app.use("/api/review", reviewRouter);
+app.use("/api/plan", planRouter);
 
 app.listen(8082, function () {
   console.log("server is started");

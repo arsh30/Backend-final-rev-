@@ -33,7 +33,31 @@ module.exports.protectRoute =  function protectRoute(req, res, next) {
       res.send("kindly login to access this resource");
     }
 }
-  
+
+module.exports.isAuthorized = function isAuthorized(roles) {
+  //id -> user get -> then define roles 
+  //roles -> then check the role is present in the array or not  && otherwise not
+  return async function (req, res, next) {
+    let { userId } = req;  //yeh hmko milegi through protect route
+    console.log("isAuthorized body:", id);
+    try {
+      let user = await userModel.findOne({ userId });
+      let isAuthorized = roles.includes(user.role);
+      if (isAuthorized) {
+        next();
+      } else {
+        res.status().json({
+          message:"user Not Authorized"
+        })
+      }
+    } catch (err) {
+      console.log(err);
+      res.status(500).json({
+        message:"server error"
+      })
+    }
+  }
+}
   
   
 //NOTE: module.exports.filename that we want to create
