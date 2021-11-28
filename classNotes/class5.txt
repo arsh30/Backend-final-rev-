@@ -1,0 +1,738 @@
+1) make CRUD Part in  the user, we did study in prev class signup,login,reset,forget
+It is a part of authentication
+
+2) CRUD Operations in user router:
+const express = require("express");
+const userModel = require("../model/userModel");
+const { protectRoute , bodyChecker} = require('./utilFns');
+
+// Make routes in particular folder
+const userRouter = express.Router();
+
+userRouter
+  .route("/")
+  .post(bodyChecker, createUser)
+  .get(protectRoute, getUsers);  //locahost:8082/user/ -> get
+
+userRouter
+  .route("/:id")   //api/user/ some id
+  .get(getUser)
+  .patch(bodyChecker, updateUser)
+  .delete(bodyChecker, deleteUser)
+
+async function createUser(req, res) {
+    try {
+      let user = await userModel.create(req.body);   //normall req body se data manwakr put krdiya
+      res.status(200).json({
+        message: user
+      })
+      
+    } catch (err) {
+      console.log(err);
+      res.status(500).json({
+        message:"Server error"
+      })
+    }
+}
+async function getUser(req, res) {
+  let { id } = req.params;
+  try {  //isme data param me aayega
+    let users = await userModel.findById(id);
+    res.status(200).json({
+      message:users
+    })
+  } catch (err) {
+    console.log(err);
+    res.status(500).json({
+      message: err.message
+    })
+  }
+}
+async function getUsers(req, res) {
+  //It will give the details of all users
+    try {
+        let users = await userModel.find();   //find -> it gives the detail of all the users
+        res.status(200).json({
+            message: users
+        })
+  } catch (err) {
+    console.log(
+      "error to get details of user!! please verify your email first"
+    );
+    res.status(500).json({
+      message: " please verify your email first",
+    });
+  }
+}
+
+async function updateUser(req, res) {   //isme jo id vo param me aayegi and data body me aayegi
+  let { id } = req.params;
+  try {
+    if (req.body.password || req.body.confirmPassword) {   //agar password hai or confirm password usko chnge nhi krna
+      return res.status(400).json({
+        message:"usee forget Password instead"
+      })
+    }
+    let user = await userModel.findById(id);
+    console.log("user", user);
+    if (user) {
+      // req.body.id = undefined; dont need this because data param me hai
+      for (let key in req.body) {   //update work jese hmne reset me kr tha vese hi krege means user phle mangwaege then usme updation krege
+        user[key] = req.body[key];
+      }
+      await user.save({
+        validateBeforeSave: false,  //yeh jo hai confirm password and password mangra tha toh yeh mongoose function isse sare jitne bhi validators hai vo bnd krdiya jidr password and confirmpassword match hora tha sab band krdiya, and we closed the prehook function also
+      });
+      res.status(200).json({
+        message:user
+      })
+    } else {
+      res.status(400).json({
+        message: "id not found"
+      })
+    }
+  } catch (err) {
+    console.log(err);
+    res.status(500).json({
+      message: "server error"
+    })
+  }
+}
+
+async function deleteUser(req, res) {
+  //isme hmne param se id nikali  and find by id pr call kri or vo bnda remove hogya
+  let { id } = req.params;
+  try {
+    let user = await userModel.findByIdAndDelete(id);
+    res.status(500).json({
+      user:user
+    })    
+  }catch (err) {
+    console.log(err);
+    res.status(500).json({
+      message: "server error"
+    })
+  }
+}
+module.exports = userRouter;
+
+==============
+AUTHERIZATION:
+3)now what we have done Crud Operations, now we will do that whom could use this auth and admin particular
+
+3.1) CLOSURES: -> benefits: agar bhar wala function udh bhi jaye but andr wala jo hai udr se hum variable access kr skte hai
+means hum phle roles define krege then functon me passkrege
+
+eg:->   
+.delete(bodyChecker, isAuthorized(["admin"]), deleteUser)
+
+function isAuthorized(roles) {  //means phle function call hoga isAuthorized roles me admin aajega then jo routes hai vo executes honge
+  return async function () {   //agle next() pr jane ke liye hum async krege function ko
+    
+  }
+}
+====================
+STEPS:
+1) assigning role in the database frontend se bhjege
+roles: {
+    type: String,
+    enum: ["admin", "ce", "user"],  //enum isme jo jo roles bhjne hai vo bhjege and agar kuch na ho toh default chl jaye
+    default: "user"
+}
+
+2) protect route: protect route aate hi use krlege or jidr decrypted token udr id nikal lenege jb user login krega
+
+ if (decryptedToken) {
+      //decrypted token has Id in it, because we pass the payload with Id so req ki body me bhi voihi hogi
+    let userId = decryptedToken.id;
+    req.userId = userId;  //request ki body me key bnai userId name ki and  save krdiya with userId jo abhi nikali hai
+    console.log('body:',req.userId);
+      next();
+    }
+
+3)STEP 3 isautherized
+function isAuthorized(roles) {
+  //id -> user get -> then define roles 
+  //roles -> then check the role is present in the array or not  && otherwise not
+  return async function (req, res, next) {
+    let { userId } = req;  //yeh hmko milegi through protect route
+    console.log("isAuthorized body:", id);
+    try {
+      let user = await userModel.findOne({ userId });
+      let isAuthorized = roles.includes(user.role);
+      if (isAuthorized) {
+        next();
+      } else {
+        res.status().json({
+          message:"user Not Authorized"
+        })
+      }
+    } catch (err) {
+      console.log(err);
+      res.status(500).json({
+        message:"server error"
+      })
+    }
+  }
+}
+
+===========================================================
+
+ALTERNATE WAY
+
+ .post(bodyChecker,isAuthorized,createUser)  normally isautherized aise bhi pass kr skte normal function bnakr alag se closure isliye pass kra bcause agar hmare pass multiple roles hote toh sabke alag alag function bnakr autherized krte so it is  better hmne CLOSURES use krliye 
+
+async function isAuthorized(req, res) {
+  let { userId } = req;
+  let roles = ["admin"];
+  //id -> user get -> define role of the user
+  try {
+    let user = await userModel.findById(userId);   
+    let userIsAuthorized = roles.includes(user.role);
+    if (userIsAuthorized) {
+      next();
+    }
+    else {
+      res.status(404).json({
+        message:"user not autherized"
+      })
+    }
+  }catch (err) {
+    console.log(err);
+    res.status(500).json({
+      message:"server error"
+    })
+  }
+}
+async function isAuthorizedCE(req, res) {
+  let { userId } = req;
+  let roles = ["admin","ce"];
+  //id -> user get -> define role of the user
+  try {
+    let user = await userModel.findById(userId);   
+    let userIsAuthorized = roles.includes(user.role);
+    if (userIsAuthorized) {
+      next();
+    } else {
+      res.status(404).json({
+        message:"user not autherized"
+      })
+    }
+  }catch (err) {
+    console.log(err);
+    res.status(500).json({
+      message:"server error"
+    })
+  }
+}
+
+=========================
+WHOLE CODES:
+
+1) USER_ROUTER.JS:->
+
+const express = require("express");
+const userModel = require("../model/userModel");
+const { protectRoute , bodyChecker} = require('./utilFns');
+
+// Make routes in particular folder
+const userRouter = express.Router();
+
+userRouter.use(protectRoute);  //we want that before every function the protetRoute will be added in front of this we do authorization part
+
+userRouter
+  .route('/:id')  //we created this id because we make sure that the user will come to get the id, it is necessary to give the idea to them
+  .get(getUser);  //same route will not give us the error
+
+userRouter
+  .route("/")
+  .post(bodyChecker,isAuthorized(["admin"]) ,createUser)
+  .get(protectRoute,isAuthorized(["admin","ce"]) ,getUsers);  //locahost:8082/user/ -> get
+
+userRouter
+  .route("/:id")   //api/user/ some id  
+  .get(getUser)   //(delete and create sirf admin kar skta)
+  .patch(bodyChecker, isAuthorized(["admin", "ce"]), updateUser)  //isAuthorized(["admin","ce"]) -> means is Authorized ko call lgay hmne and usme ik array me dalkr roles bhjdiye ki yehi allowed
+  .delete(bodyChecker, isAuthorized(["admin"]), deleteUser)
+
+async function createUser(req, res) {
+    try {
+      let user = await userModel.create(req.body);   //normall req body se data manwakr put krdiya
+      res.status(200).json({
+        message: user
+      })
+      
+    } catch (err) {
+      console.log(err);
+      res.status(500).json({
+        message:"Server error"
+      })
+    }
+}
+async function getUser(req, res) {
+  let { id } = req.params;
+  try {  //isme data param me aayega
+    let users = await userModel.findById(id);
+    res.status(200).json({
+      message:users
+    })
+  } catch (err) {
+    console.log(err);
+    res.status(500).json({
+      message: err.message
+    })
+  }
+}
+async function getUsers(req, res) {
+  //It will give the details of all users
+    try {
+        let users = await userModel.find();   //find -> it gives the detail of all the users
+        res.status(200).json({
+            message: users
+        })
+  } catch (err) {
+    console.log(
+      "error to get details of user!! please verify your email first"
+    );
+    res.status(500).json({
+      message: " please verify your email first",
+    });
+  }
+}
+
+async function updateUser(req, res) {   //isme jo id vo param me aayegi and data body me aayegi
+  let { id } = req.params;
+  try {
+    if (req.body.password || req.body.confirmPassword) {   //agar password hai or confirm password usko chnge nhi krna
+      return res.status(400).json({
+        message:"usee forget Password instead"
+      })
+    }
+    let user = await userModel.findById(id);
+    console.log("user", user);
+    if (user) {
+      // req.body.id = undefined; dont need this because data param me hai
+      for (let key in req.body) {   //update work jese hmne reset me kr tha vese hi krege means user phle mangwaege then usme updation krege
+        user[key] = req.body[key];
+      }
+      await user.save({
+        validateBeforeSave: false,  //yeh jo hai confirm password and password mangra tha toh yeh mongoose function isse sare jitne bhi validators hai vo bnd krdiya jidr password and confirmpassword match hora tha sab band krdiya, and we closed the prehook function also
+      });
+      res.status(200).json({
+        message:user
+      })
+    } else {
+      res.status(400).json({
+        message: "id not found"
+      })
+    }
+  } catch (err) {
+    console.log(err);
+    res.status(500).json({
+      message: "server error"
+    })
+  }
+}
+
+async function deleteUser(req, res) {
+  //isme hmne param se id nikali  and find by id pr call kri or vo bnda remove hogya
+  let { id } = req.params;
+  try {
+    let user = await userModel.findByIdAndDelete(id);
+    res.status(500).json({
+      user:user
+    })    
+  }catch (err) {
+    console.log(err);
+    res.status(500).json({
+      message: "server error"
+    })
+  }
+}
+ 
+function isAuthorized(roles) {
+  //id -> user get -> then define roles 
+  //roles -> then check the role is present in the array or not  && otherwise not
+  return async function (req, res, next) {
+    let { userId } = req;  //yeh hmko milegi through protect route
+    console.log("isAuthorized body:", id);
+    try {
+      let user = await userModel.findOne({ userId });
+      let isAuthorized = roles.includes(user.role);
+      if (isAuthorized) {
+        next();
+      } else {
+        res.status().json({
+          message:"user Not Authorized"
+        })
+      }
+    } catch (err) {
+      console.log(err);
+      res.status(500).json({
+        message:"server error"
+      })
+    }
+  }
+}
+// async function isAuthorized(req, res) {
+//   let { userId } = req;
+//   let roles = ["admin"];
+//   //id -> user get -> define role of the user
+//   try {
+//     let user = await userModel.findById(userId);   
+//     let userIsAuthorized = roles.includes(user.role);
+//     if (userIsAuthorized) {
+//       next();
+//     }
+//     else {
+//       res.status(404).json({
+//         message:"user not autherized"
+//       })
+//     }
+//   }catch (err) {
+//     console.log(err);
+//     res.status(500).json({
+//       message:"server error"
+//     })
+//   }
+// }
+// async function isAuthorizedCE(req, res) {
+//   let { userId } = req;
+//   let roles = ["admin","ce"];
+//   //id -> user get -> define role of the user
+//   try {
+//     let user = await userModel.findById(userId);   
+//     let userIsAuthorized = roles.includes(user.role);
+//     if (userIsAuthorized) {
+//       next();
+//     } else {
+//       res.status(404).json({
+//         message:"user not autherized"
+//       })
+//     }
+//   }catch (err) {
+//     console.log(err);
+//     res.status(500).json({
+//       message:"server error"
+//     })
+//   }
+// }
+module.exports = userRouter;
+
+===========================================================================
+2)AUTH_ROUTER.JS
+
+const express = require("express");
+const { bodyChecker } = require("./utilFns");
+const jwt = require("jsonwebtoken");
+const userModel = require("../model/userModel");
+const { JWT_SECRET } = require("../secret");
+const emailSender = require("../helpers/emailSender");
+
+const authRouter = express.Router();
+
+authRouter.route("/signup").post(bodyChecker, signupUser);
+authRouter.route("/login").post(bodyChecker, loginUser);
+authRouter.route("/forgetPassword").post(bodyChecker, forgetPassword);
+authRouter.route("/resetPassword").post(bodyChecker, resetPassword);
+
+async function signupUser(req, res) {
+  try {
+    let newUser = await userModel.create(req.body); //create is used to entries in the document
+    res.status(200).json({
+      message: "user created successfully",
+      user: newUser,
+    });
+  } catch (err) {
+    console.log(err);
+    res.status(500).json({
+      message: err.message,
+    });
+  }
+}
+
+async function loginUser(req, res) {
+  try {
+    let { email, password } = req.body; //email password aaya body me and then check kra usermodel ie database me ki hai ya nahi using findOne
+    let user = await userModel.findOne({ email });
+    if (user) {
+      if (user.password == password) {
+        let token = jwt.sign({ id: user["_id"] }, JWT_SECRET);
+        console.log("token:", token);
+        res.cookie("JWT", token, { httpOnly: true });
+        res.status(200).json({
+          message: "user logged In successfully",
+        });
+      } else {
+        res.status(404).json({
+          message: "email or password is incorrect",
+        });
+      }
+    } else {
+      res.status(400).json({
+        message: "email or password is incorrect",
+      });
+    }
+  } catch (err) {
+    console.log(err);
+    res.status(500).json({
+      message: err.message,
+    });
+  }
+}
+
+async function forgetPassword(req, res) {
+  try {
+    let { email } = req.body;
+    let user = await userModel.findOne({ email }); //1st search the email on the database
+    if (user) {
+      let token = (Math.floor(Math.random() * 10000) + 10000)
+        .toString()
+        .substring(1); //2nd  create token otp based
+      let updateRes = await userModel.updateOne({ email }, { token }); //3rd update the database with the new token
+      // console.log("updated Value", updateRes);
+
+      let newUser = await userModel.findOne({ email });
+      console.log("newUser", newUser);
+
+      //4 step is to send the mail on the user
+      await emailSender(token, user.email);
+
+      res.status(200).json({
+        message: "user Token send to your email",
+        user: newUser,
+        token,
+      });
+    } else {
+      res.status(400).json({
+        message: "email or password is incorrect",
+      });
+    }
+  } catch (err) {
+    console.log(err);
+    res.status(500).json({
+      message: err.message,
+    });
+  }
+}
+
+async function resetPassword(req, res) {
+  try {
+    let { token, password, confirmPassword } = req.body;
+    let user = await userModel.findOne({ token }); //user nikala adn token ke basis pr search kra database me , token mila toh aage chhla
+    console.log("user", user);
+    if (user) {
+      // user.password = password;
+      // user.confirmPassword = confirmPassword;
+      // user.token = undefined;   //yeh jo krre the use this by METHODS:
+
+      //ALTERNATE WAY
+
+      user.resetHandler(password, confirmPassword);
+      await user.save();
+
+      let newUser = await userModel.findOne({ email: user.email });
+
+      res.status(200).json({
+        message: "user token send to your email",
+        user: newUser,
+        token,
+      });
+    } else {
+      res.status(404).json({
+        message: "token is incorrect",
+      });
+    }
+  } catch (err) {
+    console.log(err);
+    res.status(500).json({
+      message: err.message,
+    });
+  }
+}
+
+// function tempLoginUser(req, res) {
+//     try {
+//       let { email, password } = req.body;
+//       let obj = content.find(function (obj) {
+//         //1) Database pr loop lgaya or search kra id ko
+//         return (obj.email = email); //rhs is email which is send through the frontend
+//       });
+//       if (obj.password == password) {
+//         let token = jwt.sign({ email: obj.email }, JWT_SECRET); //1st param is payload(email -> yeh hum khud kuch bhi lik skte hai :email jidr se nikali h vo), 2nd parm is the SECRET KEY Which we make
+//         console.log("tokenId", token);
+//         res.cookie("JWT", token, { httpOnly: true }); //1ST PARAM is Cookie Name(khud se kuch bhi rakho) , 2nd param is(token)
+//         res.status(200).json({
+//           message: "user logged In",
+//           user: obj,
+//         });
+//       } else {
+//         res.status(402).json({
+//           message: "kindly go on the login function",
+//         });
+//       }
+//     } catch (err) {
+//       res.json({
+//         message: "Kindly do signup first",
+//       });
+//     }
+//   }
+
+module.exports = authRouter;
+
+==============================================================================
+3) UTIL_FNS.JS
+
+const jwt = require("jsonwebtoken");
+const { JWT_SECRET } = require('../secret');
+
+module.exports.bodyChecker = function bodyChecker(req, res, next) {
+    console.log("body checker reached");
+    let isPresent = Object.keys(req.body).length; //means check anything is present in body
+    console.log("ispresent", isPresent);
+    if (isPresent) {
+      //if the length is 1 ie true then this will execute
+      next();
+    } else {
+      res.json({
+        message: "kindly send the details in the body",
+      });
+    }
+}
+
+module.exports.protectRoute =  function protectRoute(req, res, next) {
+    console.log("protectRoute reached");
+    console.log("cookies", req.cookies); //cookieparser
+  
+    //token verify -> do this when we do the reqest multiple times
+    let decryptedToken = jwt.verify(req.cookies.JWT, JWT_SECRET); //req.cookies.JWT -> JWTis the cookie name jo request me thi AND 2nd argument is the secret code
+    console.log("decryptedToken 68", decryptedToken);
+  
+    //2) verify everytime that if bringing the token to get your response
+  if (decryptedToken) {
+    let userId = decryptedToken.id;
+    req.userId = userId;  //request ki body me and userId name ki bnaya or save krdiya with userId jo abhi nikali hai
+    console.log('body:',req.userId);
+      next();
+    } else {
+      res.send("kindly login to access this resource");
+    }
+}
+  
+  
+  
+//NOTE: module.exports.filename that we want to create
+
+
+======================================================
+4) APP1.JS
+
+//npm init -y
+const express = require("express");
+let fs = require("fs");
+const userRouter = require('./Routers/userRouter');
+const authRouter = require('./Routers/authRouter');
+const cookieParser = require("cookie-parser");
+
+
+const app = express();
+
+// let content = JSON.parse(fs.readFileSync("./data.json"));
+//crud functions
+
+app.use(express.static("Frontend_Folder"));
+app.use(express.json());
+app.use(cookieParser()); //from this we send cookie to anyone (cookie ie token)
+
+
+app.use("/api/user", userRouter);
+app.use("/api/auth", authRouter);
+
+
+app.listen(8082, function () {
+  console.log("server is started");
+});
+
+app.use(function (req, res) {
+  res.sendFile("./Frontend_Folder/404.html", { root: __dirname }); //dirname has 2 underscore
+});
+
+=============================
+5) MODELS
+
+const mongoose = require("mongoose");
+const { DB_PASSWORD } = require("../secret");
+const validator = require("email-validator");
+
+let db_link = `mongodb+srv://admin:${DB_PASSWORD}@cluster0.eeqwe.mongodb.net/myFirstDatabase?retryWrites=true&w=majority`;
+
+mongoose
+  .connect(db_link)
+  .then(function (connection) {
+    console.log("Database is connected");
+  })
+  .catch(function (err) {
+    console.log("err", err);
+  });
+
+const userSchema = new mongoose.Schema({
+  name: {
+    type: String,
+    required: true,
+  },
+  email: {
+    type: String,
+    required: true,
+    unique: true,
+    validate: function () {
+      //3rd party library: npm package
+      return validator.validate(this.email); //this.email means issi schema ki email
+    },
+  },
+  password: {
+    type: String,
+    required: true,
+    minlength: 8,
+  },
+  confirmPassword: {
+    type: String,
+    required: true,
+    min: 8,
+    validate: function () {
+      this.password = this.confirmPassword;
+    },
+  },
+  token: String,
+  roles: {
+    type: String,
+    enum: ["admin", "ce", "user"],
+    default: "user"
+  },
+  createdAt: {
+    type: String,
+  }
+});
+
+//hooks -> pre cook , save is the event listner , we can delete update as well
+userSchema.pre("save", function (next) {
+  this.confirmPassword = undefined;
+  next();
+});
+//METHODS:  use RESET HANDLER CODE
+userSchema.methods.resetHandler = function (password, confirmPassword) {
+  this.password = password;
+  this.confirmPassword = confirmPassword;
+  this.token = undefined;
+};
+
+//2nd make model from userschema
+const userModel = mongoose.model("userModel", userSchema);
+
+//to use this we export this module
+module.exports = userModel;
+
+
+
+
+
+============================================
