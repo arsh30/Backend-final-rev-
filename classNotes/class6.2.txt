@@ -1,0 +1,35 @@
+12th oct REVISION
+
+1) CLIENT request on the SERVER. SERVER has the routes , and having correspondance(bagal me) functions of each routes  means kahain bhi request jibhi request pr toh vo function execute hoga
+
+2)in App1.js -> express.static  -> it serves the frontend files(basically index.html);
+  2.1) express.json -> Jo bhi post request aayegi usme yeh data add krta having
+  2.2)app.use(cookie-parser()) -> yeh cookie bhjta  hai  eg in login function
+  2.3)app.use(sendFile) -> it is used to send the files
+
+3) FLOW OF EXECUTION: -> REq aayegi server pr  :
+    3.1)1st App1.js  will run so make routes on them
+    3.2)make routers folder -> in this we make the routes and writes the function and in the begining of this page the page will start from express.Routers();
+    3.3)Atlast make model folder -> in this, we add the data in the database ie MongoDb
+
+==========================================
+INTERVIEW QUESTION
+
+1) What is Authentication?
+Sol) verifying the person in the entity using OTP,Email,Password eg: signup,login,resetPassword,ForgetPassword
+
+2)What is Autherization?
+sol) to check wheteher the person has right to do this task or not means hm roles assign krte hai isme
+
+
+==========================================
+1) ForgetPassword function EXECUTION
+sol 1search on the basis of email in database
+    1.2) create token (Otp based) copy from the gfg link
+    1.3) set the token in the database using UpdateOne,  UpdateOne({email}(jiske base pr search krna ie filter), {token} 2nd param is jo update krna h)
+    1.4) if we use UpdateOne then on above it we have to execute 1 more query ie FindOne
+    1.5) send the token on the email using await emailSender(token,user.email);
+
+2)resetPassword function EXECUTION
+sol) 
+ 

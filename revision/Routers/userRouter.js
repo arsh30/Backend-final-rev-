@@ -23,6 +23,9 @@ userRouter
   .post(bodyChecker,isAuthorized(["admin"]) ,createUser)
   .get(protectRoute,isAuthorized(["admin","ce"]) ,getUsers);  //locahost:8082/user/ -> get
 
+
+ddkjwhd
+
 userRouter
   .route("/:id")   //api/user/ some id  
   .get(getUser)   //(delete and create sirf admin kar skta)

@@ -1,0 +1,11 @@
+06 oct,2021
+
+1)Factory design it is used for to write the simple design  means sare cheeze isme put krdege CRUD operation jo har ik ke use krre the
+
+===============================
+2)Is Autherized ko hm util me lekr gye then import krliya
+
+
+===============================
+
+REVIEW MODEL
