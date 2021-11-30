@@ -31,5 +31,34 @@ sol 1search on the basis of email in database
     1.5) send the token on the email using await emailSender(token,user.email);
 
 2)resetPassword function EXECUTION
-sol) 
+sol) 2.1) Findone krege on the basis of TOKEN jo database me save kra when we were doing the forget password at that time we will save it
+    2.2) whose token has matched after that we change the password
+
+=============================================
+
+3) Autherization : FOR THIS WE Make an extra entry in the Model ie Role:
+    3.1) come to util functions
+    3.2) Protect Route: in this we verify that the person is same as the person which is logged in and send the token
+    3.3) ProtectRoute:
+        IF(decrypteToken) {
+            jb hmne payload bnaya tha in cookie toh usme payload email bhji thi so vohi token me decrypt hokr aayegi
+            3.3.1) jo token hai vo cookie me aata hai
+            3.3.2) verify that token
+            3.3.3.3) we take the Id very smartly from the decrypteToken
+            and ab jo req hai vo har jgh use kr skte hai and hmne key add kri req.userId = userId;
+    
+    3.4)ProtectRoute me extra work kra hai ki hmne Id ji request me add krdi ab vo upr se niche aayegi ie in isAutherized because the request object has same everywhere
+
+================================================================
+
+4) isAutherized -> ab isme ID store hogyi hai
+1)toh request par hme id milegi
+2) uss id ke based pr search kra hmne 
+  user.role(yeh hmne key add kri hai database eme)
+3) now check krege ki user ka jo current role hai vo admin ke equal hai agar hai toh aage bhjdege
+
+
+===============================================================
+
+        }
  
