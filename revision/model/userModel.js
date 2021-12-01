@@ -7,7 +7,7 @@ let db_link = `mongodb+srv://admin:${DB_PASSWORD}@cluster0.eeqwe.mongodb.net/myF
 mongoose
   .connect(db_link)
   .then(function (connection) {
-    console.log("Database is connected");
+    console.log("user Database is connected");
   })
   .catch(function (err) {
     console.log("err", err);
@@ -41,14 +41,18 @@ const userSchema = new mongoose.Schema({
     },
   },
   token: String,
+  validUpto: {
+    type: Date,
+    default: Date.now(),
+  },
   roles: {
     type: String,
     enum: ["admin", "ce", "user"],
-    default: "user"
+    default: "user",
   },
   createdAt: {
     type: String,
-  }
+  },
 });
 
 //hooks -> pre cook , save is the event listner , we can delete update as well

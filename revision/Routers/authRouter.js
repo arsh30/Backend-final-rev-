@@ -97,6 +97,7 @@ async function resetPassword(req, res) {
     let { token, password, confirmPassword } = req.body;
     let user = await userModel.findOne({ token }); //user nikala adn token ke basis pr search kra database me , token mila toh aage chhla
     console.log("user", user);
+    //user.validUpto + 5000 < Date.now()
     if (user) {
       // user.password = password;
       // user.confirmPassword = confirmPassword;

@@ -4,7 +4,7 @@ let db_link = `mongodb+srv://admin:${DB_PASSWORD}@cluster0.eeqwe.mongodb.net/myF
 const validator = require("email-validator");
 
 mongoose.connect(db_link).then(function (connection) {
-    console.log("db is connected");
+    console.log("review db is connected");
 }).catch(function (err) {
     console.log("err", err)
 })
