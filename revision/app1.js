@@ -6,6 +6,7 @@ const authRouter = require("./Routers/authRouter");
 const planRouter = require("./Routers/planRouter");
 const cookieParser = require("cookie-parser");
 const reviewRouter = require("./Routers/reviewRouter");
+const BookingRouter = require("./Routers/bookingRouter");
 
 const app = express();
 
@@ -20,6 +21,7 @@ app.use("/api/user", userRouter);
 app.use("/api/auth", authRouter);
 app.use("/api/review", reviewRouter);
 app.use("/api/plan", planRouter);
+app.use("/api/booking", BookingRouter);
 
 app.listen(8082, function () {
   console.log("server is started");

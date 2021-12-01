@@ -53,6 +53,10 @@ const userSchema = new mongoose.Schema({
   createdAt: {
     type: String,
   },
+  bookings: {
+    type: [mongoose.Schema.ObjectId],  //means idr array of enteries aayegi jo review dalega vo idr put hojega
+    ref:"bookingModel"
+},
 });
 
 //hooks -> pre cook , save is the event listner , we can delete update as well
